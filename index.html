@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS AI - Advanced System Controls</title>
+    
+    <!-- React & Babel -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        #loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            gap: 20px;
+            background: #0a0a0a;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(0, 191, 255, 0.3);
+            border-top: 4px solid #00BFFF;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .loading-text {
+            color: #00BFFF;
+            font-size: 18px;
+            text-align: center;
+        }
+        
+        #error {
+            display: none;
+            background: #ff4444;
+            color: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        #root {
+            width: 100%;
+            height: 100vh;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">
+            <div>🚀 Initializing JARVIS AI...</div>
+            <div style="font-size: 14px; margin-top: 10px; opacity: 0.8;">Advanced System Controls</div>
+        </div>
+    </div>
+    
+    <div id="error">
+        <h3>❌ System Error</h3>
+        <p id="error-message">An unexpected error occurred</p>
+        <button onclick="location.reload()" style="margin-top: 10px; padding: 8px 16px; background: white; border: none; border-radius: 5px; cursor: pointer;">
+            Reload Application
+        </button>
+    </div>
+    
+    <div id="root"></div>
+
+    <script>
+        // Enhanced error handling
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e.error);
+            
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const errorMessage = document.getElementById('error-message');
+            
+            if (loading) loading.style.display = 'none';
+            if (error) {
+                error.style.display = 'block';
+                errorMessage.textContent = e.error ? e.error.message : 'Unknown error occurred';
+            }
+        });
+
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('Unhandled promise rejection:', e.reason);
+        });
+
+        // Initialize when loaded
+        window.addEventListener('load', function() {
+            console.log('JARVIS AI loading complete');
+        });
+    </script>
+
+    <!-- React Application -->
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        function JARVIS() {
+            const [messages, setMessages] = useState([]);
+            const [inputText, setInputText] = useState('');
+            const [isListening, setIsListening] = useState(false);
+            const [isSpeaking, setIsSpeaking] = useState(false);
+            const [aiStatus, setAiStatus] = useState({ 
+                enabled: false, 
+                provider: 'gemini',
+                hasGeminiKey: false,
+                model: 'gemini-pro'
+            });
+            const messagesEndRef = useRef(null);
+
+            // Voice Recognition
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const [recognition, setRecognition] = useState(null);
+
+            useEffect(() => {
+                initializeJARVIS();
+                initializeVoiceRecognition();
+            }, []);
+
+            useEffect(() => {
+                scrollToBottom();
+            }, [messages]);
+
+            const scrollToBottom = () => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            };
+
+            const initializeJARVIS = async () => {
+                try {
+                    const systemInfo = await window.electronAPI.getSystemInfo();
+                    const aiInfo = await window.electronAPI.getAIStatus();
+                    
+                    setAiStatus(aiInfo);
+                    
+                    let welcomeMessage = `🤖 JARVIS AI - Advanced System Controls\n`;
+                    welcomeMessage += `🖥️ ${systemInfo.hostname} | ${systemInfo.platform} | ${systemInfo.username}\n`;
+                    welcomeMessage += `🕒 ${systemInfo.time} | ${systemInfo.date}\n\n`;
+                    
+                    if (aiInfo.hasGeminiKey) {
+                        welcomeMessage += `🧠 AI: Google Gemini Pro (Advanced Intelligence)\n`;
+                        welcomeMessage += `🚀 Full AI capabilities activated\n\n`;
+                    }
+                    
+                    welcomeMessage += `💡 **Available System Commands:**\n`;
+                    welcomeMessage += `• "lock screen" - Lock computer\n`;
+                    welcomeMessage += `• "restart computer" - Restart system\n`;
+                    welcomeMessage += `• "shutdown" - Shutdown computer\n`;
+                    welcomeMessage += `• "volume up/down" - Control volume\n`;
+                    welcomeMessage += `• "mute/unmute" - Mute audio\n`;
+                    welcomeMessage += `• "play/pause music" - Media control\n`;
+                    welcomeMessage += `• "take screenshot" - Capture screen\n`;
+                    welcomeMessage += `• "system info" - Show system details\n`;
+                    welcomeMessage += `• "open chrome/notepad" - Launch apps\n`;
+                    welcomeMessage += `• "search [query]" - Web search\n`;
+                    welcomeMessage += `• Ask me anything - Natural language!`;
+                    
+                    addMessage('jarvis', welcomeMessage);
+                    
+                    if (aiInfo.hasGeminiKey) {
+                        speakText("JARVIS Advanced System Controls activated. All systems online. Ready for your commands.");
+                    }
+                    
+                    // Show the app
+                    document.getElementById('root').style.display = 'block';
+                    document.getElementById('loading').style.display = 'none';
+                    
+                } catch (error) {
+                    console.error('Initialization error:', error);
+                    document.getElementById('error-message').textContent = `Initialization failed: ${error.message}`;
+                    document.getElementById('error').style.display = 'block';
+                    document.getElementById('loading').style.display = 'none';
+                }
+            };
+
+            const initializeVoiceRecognition = () => {
+                if (!SpeechRecognition) {
+                    console.log('Voice recognition not supported');
+                    return;
+                }
+                
+                try {
+                    const recog = new SpeechRecognition();
+                    recog.continuous = false;
+                    recog.interimResults = false;
+                    recog.lang = 'en-US';
+                    recog.maxAlternatives = 3;
+                    
+                    recog.onstart = () => {
+                        console.log('Voice recognition started');
+                        setIsListening(true);
+                        addMessage('system', '🎤 Listening... Speak now');
+                    };
+                    
+                    recog.onresult = (event) => {
+                        const results = event.results;
+                        const transcript = results[0][0].transcript;
+                        const confidence = results[0][0].confidence;
+                        
+                        console.log(`Voice result: "${transcript}" (confidence: ${confidence})`);
+                        
+                        setIsListening(false);
+                        addMessage('system', `🎤 Heard: "${transcript}"`);
+                        
+                        if (confidence > 0.6) {
+                            setInputText(transcript);
+                            handleSendMessage(transcript);
+                        } else {
+                            addMessage('system', '❌ Low confidence in voice recognition. Please try again.', true);
+                        }
+                    };
+                    
+                    recog.onerror = (event) => {
+                        console.error('Voice recognition error:', event.error);
+                        setIsListening(false);
+                        addMessage('system', `❌ Voice error: ${event.error}`, true);
+                    };
+                    
+                    recog.onend = () => {
+                        console.log('Voice recognition ended');
+                        setIsListening(false);
+                    };
+                    
+                    setRecognition(recog);
+                } catch (error) {
+                    console.error('Failed to initialize voice recognition:', error);
+                }
+            };
+
+            const addMessage = (sender, text, isError = false) => {
+                setMessages(prev => [...prev, { 
+                    id: Date.now(), 
+                    sender, 
+                    text, 
+                    timestamp: new Date().toLocaleTimeString(),
+                    isError 
+                }]);
+            };
+
+            const speakText = (text) => {
+                if (!window.speechSynthesis) {
+                    console.log('Text-to-speech not supported');
+                    return;
+                }
+                
+                const cleanText = text.replace(/[*_`#\-\[\]()]/g, '').substring(0, 200);
+                if (!cleanText.trim()) return;
+                
+                setIsSpeaking(true);
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                
+                utterance.rate = 0.9;
+                utterance.pitch = 0.8;
+                utterance.volume = 1;
+                utterance.lang = 'en-US';
+                
+                utterance.onend = () => {
+                    setIsSpeaking(false);
+                    console.log('Speech finished');
+                };
+                
+                utterance.onerror = () => {
+                    setIsSpeaking(false);
+                    console.error('Speech error');
+                };
+                
+                window.speechSynthesis.speak(utterance);
+            };
+
+            const stopSpeaking = () => {
+                if (window.speechSynthesis) {
+                    window.speechSynthesis.cancel();
+                    setIsSpeaking(false);
+                }
+            };
+
+            const startListening = () => {
+                if (!recognition) {
+                    addMessage('system', '❌ Voice recognition not available', true);
+                    return;
+                }
+                
+                try {
+                    recognition.start();
+                } catch (error) {
+                    addMessage('system', '❌ Failed to start voice recognition', true);
+                }
+            };
+
+            const stopListening = () => {
+                if (recognition) {
+                    try {
+                        recognition.stop();
+                    } catch (error) {
+                        console.log('Error stopping recognition:', error);
+                    }
+                }
+                setIsListening(false);
+            };
+
+            const handleSendMessage = async (text = inputText) => {
+                if (!text.trim()) return;
+
+                const userMessage = text.trim();
+                setInputText('');
+                addMessage('user', userMessage);
+                await processCommand(userMessage);
+            };
+
+            const processCommand = async (command) => {
+                try {
+                    const result = await window.electronAPI.systemCommand(command);
+                    
+                    if (result.success) {
+                        if (result.isAI) {
+                            addMessage('jarvis', result.output);
+                            speakText(result.output);
+                        } else {
+                            addMessage('jarvis', result.output);
+                            if (!result.output.includes('http') && !result.output.includes('🔍')) {
+                                speakText(result.output);
+                            }
+                        }
+                    } else {
+                        addMessage('jarvis', `❌ ${result.error}`, true);
+                    }
+                } catch (error) {
+                    addMessage('jarvis', `❌ Error: ${error.message}`, true);
+                }
+            };
+
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                }
+            };
+
+            // Quick action buttons for common commands
+            const quickActions = [
+                { command: 'lock screen', label: '🔒 Lock', icon: '🔒' },
+                { command: 'system info', label: '💻 Info', icon: '💻' },
+                { command: 'take screenshot', label: '📸 Screenshot', icon: '📸' },
+                { command: 'open chrome', label: '🌐 Chrome', icon: '🌐' },
+                { command: 'open notepad', label: '📝 Notepad', icon: '📝' },
+                { command: 'open calculator', label: '🧮 Calculator', icon: '🧮' }
+            ];
+
+            const handleQuickAction = (command) => {
+                setInputText(command);
+                handleSendMessage(command);
+            };
+
+            const voiceStatus = aiStatus.hasGeminiKey ? 
+                (isListening ? '🎤 Listening...' : '🧠 Gemini AI Ready') : 
+                '⚠️ AI Initializing';
+
+            return React.createElement('div', { style: styles.container },
+                React.createElement('div', { style: styles.header },
+                    React.createElement('div', { style: styles.titleContainer },
+                        React.createElement('div', { 
+                            style: {
+                                ...styles.pulseDot,
+                                background: aiStatus.hasGeminiKey ? '#00ff00' : '#ffaa00',
+                                boxShadow: aiStatus.hasGeminiKey ? '0 0 10px #00ff00' : '0 0 10px #ffaa00'
+                            }
+                        }),
+                        React.createElement('h1', { style: styles.title }, 'JARVIS AI'),
+                        React.createElement('div', { style: styles.status }, voiceStatus)
+                    ),
+                    React.createElement('div', { style: styles.controls },
+                        React.createElement('button', {
+                            style: styles.controlButton,
+                            onClick: stopSpeaking,
+                            disabled: !isSpeaking,
+                            title: "Stop Speaking"
+                        }, isSpeaking ? '🔊' : '🔇'),
+                        React.createElement('button', {
+                            style: {
+                                ...styles.controlButton,
+                                ...styles.micButton,
+                                ...(isListening ? styles.listeningButton : {})
+                            },
+                            onClick: isListening ? stopListening : startListening,
+                            disabled: !recognition,
+                            title: recognition ? (isListening ? "Stop Listening" : "Start Voice Input") : "Voice Not Supported"
+                        }, isListening ? '⏹️' : '🎤')
+                    )
+                ),
+
+                // Quick Actions
+                React.createElement('div', { style: styles.quickActions },
+                    quickActions.map((action, index) => 
+                        React.createElement('button', {
+                            key: index,
+                            style: styles.quickActionButton,
+                            onClick: () => handleQuickAction(action.command),
+                            title: action.command
+                        }, action.icon)
+                    )
+                ),
+                
+                React.createElement('div', { style: styles.messagesContainer },
+                    messages.map(message => 
+                        React.createElement('div', {
+                            key: message.id,
+                            style: {
+                                ...styles.message,
+                                ...(message.sender === 'user' ? styles.userMessage : styles.jarvisMessage),
+                                ...(message.isError ? styles.errorMessage : {})
+                            }
+                        }, 
+                            React.createElement('div', { style: styles.messageHeader },
+                                React.createElement('strong', null, message.sender === 'user' ? 'You' : 'JARVIS'),
+                                React.createElement('span', { style: styles.timestamp }, message.timestamp)
+                            ),
+                            React.createElement('div', { style: styles.messageText }, message.text)
+                        )
+                    ),
+                    React.createElement('div', { ref: messagesEndRef })
+                ),
+                
+                React.createElement('div', { style: styles.inputContainer },
+                    React.createElement('div', { style: styles.inputWrapper },
+                        React.createElement('textarea', {
+                            style: styles.textInput,
+                            value: inputText,
+                            onChange: (e) => setInputText(e.target.value),
+                            onKeyPress: handleKeyPress,
+                            placeholder: "Try: 'lock screen' or 'restart computer' or ask me anything...",
+                            rows: 2
+                        }),
+                        React.createElement('div', { style: styles.buttonContainer },
+                            React.createElement('button', {
+                                style: { ...styles.button, ...styles.sendButton },
+                                onClick: () => handleSendMessage(),
+                                disabled: !inputText.trim()
+                            }, 'Send')
+                        )
+                    ),
+                    React.createElement('div', { style: styles.hotkeyHint },
+                        aiStatus.hasGeminiKey ?
+                            "💡 Powered by Google Gemini Pro • Use voice commands • Ctrl+J to hide/show" :
+                            "🚀 Advanced System Controls Active"
+                    )
+                )
+            );
+        }
+
+        const styles = {
+            container: {
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100vh',
+                background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)',
+                color: '#00BFFF'
+            },
+            header: {
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px 20px',
+                background: 'rgba(0, 0, 0, 0.9)',
+                borderBottom: '2px solid #00BFFF',
+                backdropFilter: 'blur(10px)'
+            },
+            titleContainer: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                flex: 1
+            },
+            pulseDot: {
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                animation: 'pulse 2s infinite'
+            },
+            title: {
+                margin: 0,
+                fontSize: '18px',
+                fontWeight: 'bold',
+                background: 'linear-gradient(45deg, #00BFFF, #0080FF, #00ff00)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+            },
+            status: {
+                fontSize: '11px',
+                opacity: 0.8,
+                color: '#00ff00'
+            },
+            controls: {
+                display: 'flex',
+                gap: '5px'
+            },
+            controlButton: {
+                background: 'rgba(0, 191, 255, 0.2)',
+                border: '1px solid #00BFFF',
+                color: '#00BFFF',
+                padding: '8px 12px',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontSize: '12px'
+            },
+            micButton: {
+                background: 'rgba(0, 191, 255, 0.3)'
+            },
+            listeningButton: {
+                background: 'rgba(255, 0, 0, 0.3)',
+                border: '1px solid #FF4444',
+                animation: 'pulse 1s infinite'
+            },
+            quickActions: {
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '10px',
+                background: 'rgba(0, 0, 0, 0.5)',
+                borderBottom: '1px solid #00BFFF'
+            },
+            quickActionButton: {
+                background: 'rgba(0, 191, 255, 0.1)',
+                border: '1px solid #00BFFF',
+                color: '#00BFFF',
+                padding: '8px 12px',
+                borderRadius: '20px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                transition: 'all 0.2s'
+            },
+            messagesContainer: {
+                flex: 1,
+                overflowY: 'auto',
+                padding: '15px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px'
+            },
+            message: {
+                padding: '12px 15px',
+                borderRadius: '12px',
+                maxWidth: '90%',
+                wordWrap: 'break-word',
+                fontSize: '13px',
+                lineHeight: '1.4'
+            },
+            userMessage: {
+                alignSelf: 'flex-end',
+                background: 'rgba(0, 191, 255, 0.15)',
+                border: '1px solid rgba(0, 191, 255, 0.3)'
+            },
+            jarvisMessage: {
+                alignSelf: 'flex-start',
+                background: 'rgba(0, 191, 255, 0.08)',
+                border: '1px solid rgba(0, 191, 255, 0.2)'
+            },
+            errorMessage: {
+                background: 'rgba(255, 0, 0, 0.1)',
+                border: '1px solid rgba(255, 0, 0, 0.3)'
+            },
+            messageHeader: {
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '4px',
+                fontSize: '11px',
+                opacity: 0.8
+            },
+            timestamp: {
+                fontSize: '9px',
+                opacity: 0.6
+            },
+            messageText: {
+                whiteSpace: 'pre-line'
+            },
+            inputContainer: {
+                padding: '15px',
+                background: 'rgba(0, 0, 0, 0.9)',
+                borderTop: '1px solid #00BFFF'
+            },
+            inputWrapper: {
+                display: 'flex',
+                gap: '8px',
+                marginBottom: '8px'
+            },
+            textInput: {
+                flex: 1,
+                background: 'rgba(0, 191, 255, 0.1)',
+                border: '1px solid #00BFFF',
+                borderRadius: '8px',
+                padding: '10px',
+                color: 'white',
+                fontSize: '13px',
+                resize: 'none',
+                fontFamily: 'inherit',
+                minHeight: '44px'
+            },
+            buttonContainer: {
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px'
+            },
+            button: {
+                padding: '10px 16px',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 'bold'
+            },
+            sendButton: {
+                background: 'linear-gradient(45deg, #00BFFF, #0080FF)',
+                color: 'white'
+            },
+            hotkeyHint: {
+                textAlign: 'center',
+                fontSize: '10px',
+                opacity: 0.6,
+                color: '#00BFFF'
+            }
+        };
+
+        // Add CSS animations
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = `
+            @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+            button:hover:not(:disabled) { transform: translateY(-1px); background: rgba(0, 191, 255, 0.3) !important; }
+            button:disabled { opacity: 0.5; cursor: not-allowed; }
+            textarea:focus { outline: none; border-color: #00ff00 !important; box-shadow: 0 0 5px rgba(0, 255, 0, 0.3); }
+            .quick-action-button:hover { transform: scale(1.1); }
+        `;
+        document.head.appendChild(styleSheet);
+
+        // Render the app
+        try {
+            ReactDOM.render(React.createElement(JARVIS), document.getElementById('root'));
+        } catch (error) {
+            console.error('Failed to render React app:', error);
+            document.getElementById('error-message').textContent = `React error: ${error.message}`;
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
